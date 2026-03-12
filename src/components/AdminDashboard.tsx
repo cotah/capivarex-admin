@@ -178,6 +178,10 @@ export default function AdminDashboard() {
   const [overrideLimit, setOverrideLimit] = useState('');
   const [overrideLoading, setOverrideLoading] = useState(false);
   const [overrideMsg, setOverrideMsg] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalTenants, setTotalTenants] = useState(0);
+  const PAGE_SIZE = 20;
+  const [detailTenant, setDetailTenant] = useState<TenantRow | null>(null);
   const [planModalUid, setPlanModalUid] = useState<string | null>(null);
   const [planModalEmail, setPlanModalEmail] = useState('');
   const [planModalCurrent, setPlanModalCurrent] = useState('');
@@ -191,12 +195,15 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const [t, s, a, h] = await Promise.allSettled([
-        apiClient<{ tenants: TenantRow[] }>('/api/admin/tenants?page_size=100'),
+        apiClient<{ tenants: TenantRow[]; total: number }>(`/api/admin/tenants?page=${currentPage}&per_page=${PAGE_SIZE}`),
         apiClient<{ events: SecurityEvent[] }>('/api/admin/security-events?page_size=50'),
         apiClient<{ tickets: AutofixTicket[] }>('/api/admin/autofix/tickets?n=30'),
         apiClient<HealthSummary>('/api/admin/health'),
       ]);
-      if (t.status === 'fulfilled') setTenants(t.value.tenants ?? []);
+      if (t.status === 'fulfilled') {
+        setTenants(t.value.tenants ?? []);
+        setTotalTenants(t.value.total ?? 0);
+      }
       if (s.status === 'fulfilled') setSecEvents(s.value.events ?? []);
       if (a.status === 'fulfilled') setTickets(a.value.tickets ?? []);
       if (h.status === 'fulfilled') setHealth(h.value);
@@ -206,7 +213,7 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => { fetchAll(); }, [fetchAll, currentPage]);
 
   // ── Chart data ────────────────────────────────────────────────────────────
   const planDist = ['free', 'me', 'everywhere']
@@ -585,6 +592,12 @@ export default function AdminDashboard() {
                                 Reset uso
                               </button>
                               <button
+                                onClick={() => setDetailTenant(t)}
+                                className="text-text-muted hover:text-blue-400 text-[10px] px-2 py-1 rounded-lg hover:bg-blue-400/10 transition-colors"
+                              >
+                                Detalhe
+                              </button>
+                              <button
                                 onClick={() => {
                                   setPlanModalUid(t.id);
                                   setPlanModalEmail(t.email);
@@ -607,6 +620,32 @@ export default function AdminDashboard() {
                       )}
                     </tbody>
                   </table>
+                  {totalTenants > PAGE_SIZE && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-white/5">
+                      <span className="text-[11px] text-text-muted">
+                        {((currentPage - 1) * PAGE_SIZE) + 1}–{Math.min(currentPage * PAGE_SIZE, totalTenants)} de {totalTenants} tenants
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                          disabled={currentPage === 1}
+                          className="text-[11px] px-3 py-1 rounded-lg bg-white/5 text-text-muted hover:bg-white/10 disabled:opacity-30 transition-colors"
+                        >
+                          ← Anterior
+                        </button>
+                        <span className="text-[11px] text-text-muted self-center">
+                          Página {currentPage} / {Math.ceil(totalTenants / PAGE_SIZE)}
+                        </span>
+                        <button
+                          onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalTenants / PAGE_SIZE), p + 1))}
+                          disabled={currentPage >= Math.ceil(totalTenants / PAGE_SIZE)}
+                          className="text-[11px] px-3 py-1 rounded-lg bg-white/5 text-text-muted hover:bg-white/10 disabled:opacity-30 transition-colors"
+                        >
+                          Próxima →
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </GlassCard>
             </div>
@@ -846,6 +885,36 @@ export default function AdminDashboard() {
             </div>
           )}
         </>
+      )}
+      {detailTenant && (
+        <div className="fixed inset-0 z-50 flex justify-end" onClick={() => setDetailTenant(null)}>
+          <div
+            className="w-full max-w-sm h-full bg-[#0a0a0f]/98 border-l border-white/10 p-6 overflow-y-auto shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-semibold text-text">Detalhe do Tenant</h3>
+              <button onClick={() => setDetailTenant(null)} className="text-text-muted hover:text-text transition-colors">✕</button>
+            </div>
+            <div className="space-y-4">
+              {[
+                { label: 'Email', value: detailTenant.email },
+                { label: 'UID', value: detailTenant.id, mono: true },
+                { label: 'Plano', value: detailTenant.plan.toUpperCase() },
+                { label: 'Mensagens usadas', value: `${detailTenant.messages_used} / ${detailTenant.messages_limit}` },
+                { label: 'Quota', value: `${Math.round(detailTenant.quota_pct)}%` },
+                { label: 'Stripe ID', value: detailTenant.stripe_customer_id ?? '—', mono: true },
+                { label: 'Criado em', value: detailTenant.created_at ? new Date(detailTenant.created_at).toLocaleString('pt-PT') : '—' },
+                { label: 'Último acesso', value: detailTenant.last_seen ? new Date(detailTenant.last_seen).toLocaleString('pt-PT') : '—' },
+              ].map(({ label, value, mono }) => (
+                <div key={label} className="border-b border-white/5 pb-3">
+                  <p className="text-[10px] text-text-muted uppercase tracking-wide mb-1">{label}</p>
+                  <p className={`text-xs text-text break-all ${mono ? 'font-mono' : ''}`}>{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
       {planModalUid && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
