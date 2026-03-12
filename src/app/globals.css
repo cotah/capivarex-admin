@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Safe area utilities for notch/status bar */
+@layer utilities {
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bottom-safe-16 {
+    bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+  .h-chat-mobile {
+    height: calc(100dvh - 3.5rem - 4rem - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+:root {
+  --bg: #0a0a0f;
+  --surface: rgba(255, 255, 255, 0.03);
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --text: #e8e6e3;
+  --text-muted: rgba(255, 255, 255, 0.4);
+  --accent: #c9a461;
+  --accent-glow: rgba(201, 164, 97, 0.15);
+  --accent-soft: rgba(201, 164, 97, 0.08);
+  --success: #4ade80;
+  --error: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html {
+  font-size: 16px;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background grid pattern */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 24px 24px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hidden scrollbar for mobile nav */
+.nav-scroll::-webkit-scrollbar {
+  display: none;
+}
+.nav-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Glass utility */
+@layer utilities {
+  .glass {
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* Capivara eye glow animation */
+@keyframes eyeGlow {
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 4px #F6B93B; }
+  50% { opacity: 1; box-shadow: 0 0 15px #F6B93B, 0 0 30px rgba(246, 185, 59, 0.25); }
+}
+.animate-eye-glow {
+  animation: eyeGlow 1.5s ease-in-out infinite;
+}
+
+/* Voice: fast glow when bot is speaking */
+@keyframes eyeGlowFast {
+  0%, 100% { opacity: 0.6; box-shadow: 0 0 8px #F6B93B; }
+  50% { opacity: 1; box-shadow: 0 0 25px #F6B93B, 0 0 50px rgba(246, 185, 59, 0.4); }
+}
+.animate-eye-glow-fast {
+  animation: eyeGlowFast 0.6s ease-in-out infinite;
+}
+
+/* Voice: steady glow when listening */
+.animate-eye-glow-steady {
+  opacity: 0.9;
+  box-shadow: 0 0 12px #F6B93B, 0 0 24px rgba(246, 185, 59, 0.3);
+}
+
+/* Memory FAB — brain pulse when AI is memorising */
+@keyframes brainPulse {
+  0%, 100% {
+    opacity: 0.7;
+    box-shadow: 0 0 0px transparent;
+    color: #c9a461;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 12px #c9a461, 0 0 28px rgba(201, 164, 97, 0.35);
+    color: #e8c97a;
+  }
+}
+.animate-brain-pulse {
+  animation: brainPulse 1.4s ease-in-out infinite;
+  border-color: rgba(201, 164, 97, 0.4);
+}
