@@ -19,6 +19,7 @@ export default function AdminPage() {
   const handleLogin = () => {
     if (input === ADMIN_PASSWORD) {
       sessionStorage.setItem('capivarex_admin_authed', '1');
+      localStorage.setItem('capivarex_admin_token', input);
       setAuthed(true);
     } else {
       setError(true);
