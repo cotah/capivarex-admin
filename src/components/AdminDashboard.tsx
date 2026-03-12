@@ -178,6 +178,12 @@ export default function AdminDashboard() {
   const [overrideLimit, setOverrideLimit] = useState('');
   const [overrideLoading, setOverrideLoading] = useState(false);
   const [overrideMsg, setOverrideMsg] = useState('');
+  const [planModalUid, setPlanModalUid] = useState<string | null>(null);
+  const [planModalEmail, setPlanModalEmail] = useState('');
+  const [planModalCurrent, setPlanModalCurrent] = useState('');
+  const [planModalSelected, setPlanModalSelected] = useState('');
+  const [planModalLoading, setPlanModalLoading] = useState(false);
+  const [planModalMsg, setPlanModalMsg] = useState('');
   const [sevFilter, setSevFilter] = useState('all');
   const lastFetch = useRef<number>(0);
 
@@ -277,6 +283,28 @@ export default function AdminDashboard() {
       await apiClient(`/api/admin/tenants/${uid}/reset-usage`, { method: 'POST' });
       fetchAll();
     } catch { /* silent */ }
+  };
+
+  const handleChangePlan = async () => {
+    if (!planModalUid || !planModalSelected) return;
+    setPlanModalLoading(true);
+    setPlanModalMsg('');
+    try {
+      await apiClient(`/api/admin/tenants/${planModalUid}/plan`, {
+        method: 'PATCH',
+        body: JSON.stringify({ plan: planModalSelected }),
+      });
+      setPlanModalMsg('✅ Plano actualizado');
+      fetchAll();
+      setTimeout(() => {
+        setPlanModalUid(null);
+        setPlanModalMsg('');
+      }, 1500);
+    } catch {
+      setPlanModalMsg('❌ Erro ao actualizar plano');
+    } finally {
+      setPlanModalLoading(false);
+    }
   };
 
   // ── KPI values ────────────────────────────────────────────────────────────
@@ -549,12 +577,26 @@ export default function AdminDashboard() {
                           </td>
                           <td className="px-4 py-3 text-text-muted">{fmtRelative(t.last_seen)}</td>
                           <td className="px-4 py-3">
-                            <button
-                              onClick={() => handleResetUsage(t.id)}
-                              className="text-text-muted hover:text-accent text-[10px] px-2 py-1 rounded-lg hover:bg-accent/10 transition-colors"
-                            >
-                              Reset uso
-                            </button>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleResetUsage(t.id)}
+                                className="text-text-muted hover:text-accent text-[10px] px-2 py-1 rounded-lg hover:bg-accent/10 transition-colors"
+                              >
+                                Reset uso
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setPlanModalUid(t.id);
+                                  setPlanModalEmail(t.email);
+                                  setPlanModalCurrent(t.plan);
+                                  setPlanModalSelected(t.plan);
+                                  setPlanModalMsg('');
+                                }}
+                                className="text-text-muted hover:text-yellow-400 text-[10px] px-2 py-1 rounded-lg hover:bg-yellow-400/10 transition-colors"
+                              >
+                                Alterar plano
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -804,6 +846,48 @@ export default function AdminDashboard() {
             </div>
           )}
         </>
+      )}
+      {planModalUid && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a0a0f]/95 p-6 shadow-2xl space-y-4">
+            <h3 className="text-sm font-semibold text-text">Alterar Plano</h3>
+            <p className="text-[11px] text-text-muted font-mono">{planModalEmail}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {['free', 'me', 'everywhere'].map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPlanModalSelected(p)}
+                  className={`py-2 rounded-xl text-[11px] font-semibold border transition-colors uppercase tracking-wide ${
+                    planModalSelected === p
+                      ? 'bg-accent/15 text-accent border-accent/40'
+                      : 'bg-white/5 text-text-muted border-white/8 hover:bg-white/10'
+                  }`}
+                >
+                  {p}
+                  {planModalCurrent === p && (
+                    <span className="block text-[9px] font-normal normal-case tracking-normal opacity-60">actual</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            {planModalMsg && <p className="text-[11px] text-text-muted">{planModalMsg}</p>}
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => { setPlanModalUid(null); setPlanModalMsg(''); }}
+                className="flex-1 py-2 rounded-xl bg-white/5 text-text-muted text-xs hover:bg-white/10 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleChangePlan}
+                disabled={planModalLoading || planModalSelected === planModalCurrent}
+                className="flex-1 py-2 rounded-xl bg-accent/15 text-accent border border-accent/30 text-xs font-medium hover:bg-accent/25 disabled:opacity-40 transition-colors"
+              >
+                {planModalLoading ? 'Salvando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
