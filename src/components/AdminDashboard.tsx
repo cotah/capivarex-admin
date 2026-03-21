@@ -65,8 +65,12 @@ interface HealthSummary {
 // Helpers
 // ---------------------------------------------------------------------------
 const PLAN_COLORS: Record<string, string> = {
-  everywhere: '#a78bfa',
-  me: '#60a5fa',
+  ara: '#D4A017',
+  ara_plus_1: '#D4A017',
+  capivarex_pro: '#c9a461',
+  capivarex_ultimate: '#a78bfa',
+  professional: '#60a5fa',
+  executive: '#a78bfa',
   free: 'rgba(255,255,255,0.25)',
 };
 
@@ -128,8 +132,12 @@ function StatusDot({ status }: { status: string }) {
 
 function PlanBadge({ plan }: { plan: string }) {
   const styles: Record<string, string> = {
-    everywhere: 'text-purple-300 bg-purple-400/10 border-purple-400/20',
-    me: 'text-blue-300 bg-blue-400/10 border-blue-400/20',
+    ara: 'text-yellow-300 bg-yellow-400/10 border-yellow-400/20',
+    ara_plus_1: 'text-yellow-300 bg-yellow-400/10 border-yellow-400/20',
+    capivarex_pro: 'text-amber-300 bg-amber-400/10 border-amber-400/20',
+    capivarex_ultimate: 'text-purple-300 bg-purple-400/10 border-purple-400/20',
+    professional: 'text-blue-300 bg-blue-400/10 border-blue-400/20',
+    executive: 'text-purple-300 bg-purple-400/10 border-purple-400/20',
     free: 'text-text-muted bg-white/5 border-white/10',
   };
   return (
@@ -216,7 +224,7 @@ export default function AdminDashboard() {
   useEffect(() => { fetchAll(); }, [fetchAll, currentPage]);
 
   // ── Chart data ────────────────────────────────────────────────────────────
-  const planDist = ['free', 'me', 'everywhere']
+  const planDist = ['free', 'ara', 'ara_plus_1', 'capivarex_pro', 'capivarex_ultimate', 'professional', 'executive']
     .map(p => ({ name: p, value: tenants.filter(t => t.plan === p).length }))
     .filter(d => d.value > 0);
 
@@ -500,7 +508,7 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="flex gap-1">
-                  {['all', 'free', 'me', 'everywhere'].map(p => (
+                  {['all', 'free', 'ara', 'ara_plus_1', 'capivarex_pro', 'capivarex_ultimate', 'professional', 'executive'].map(p => (
                     <button
                       key={p}
                       onClick={() => setPlanFilter(p)}
@@ -921,8 +929,8 @@ export default function AdminDashboard() {
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a0a0f]/95 p-6 shadow-2xl space-y-4">
             <h3 className="text-sm font-semibold text-text">Alterar Plano</h3>
             <p className="text-[11px] text-text-muted font-mono">{planModalEmail}</p>
-            <div className="grid grid-cols-3 gap-2">
-              {['free', 'me', 'everywhere'].map(p => (
+            <div className="grid grid-cols-2 gap-2">
+              {['free', 'ara', 'ara_plus_1', 'capivarex_pro', 'capivarex_ultimate', 'professional', 'executive'].map(p => (
                 <button
                   key={p}
                   onClick={() => setPlanModalSelected(p)}
